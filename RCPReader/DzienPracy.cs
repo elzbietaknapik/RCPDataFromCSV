@@ -22,13 +22,8 @@ namespace ConsoleApp7
                 this.KodPracownika = words[0];
                 DateTime.TryParse(words[1], out this.Data);
                 TimeSpan.TryParse(words[2], out this.GodzinaWejscia) ;
-    
+                TimeSpan.TryParse(words[3], out this.GodzinaWyjscia);
         }
-
-        
-
-
-      
 
 
     }

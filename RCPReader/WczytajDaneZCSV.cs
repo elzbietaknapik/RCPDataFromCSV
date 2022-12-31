@@ -1,72 +1,71 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace ConsoleApp7
 {
-    public static class WczytajDaneZCSV
+    public static class WczytajDaneZCSV 
     {
         public static void WygenerujObiektyZplikuCSV(string path, char kodFirmy)
         {
+            List<DzienPracy> DzienPracownikaFirmy = new List<DzienPracy>();
+
+            if (kodFirmy == 'A')
+                WczytywanieZPlikuCSV1(path, DzienPracownikaFirmy);
+            else if (kodFirmy == 'B')            
+                WczytywanieZPlikuCSV2(path, DzienPracownikaFirmy);
+            
+            ListaObiektówDzienPracy.WypiszObiektyListy(DzienPracownikaFirmy);
+            Console.WriteLine("Wygenerowano " + DzienPracownikaFirmy.Count() + "obiektów");
+        }
  
-                var CSVFile = File.ReadLines(path);
-             
-                if (kodFirmy == 'A')
+    public static void WczytywanieZPlikuCSV1( string path, List <DzienPracy> DzienPracownikaFirmy)
+    {
+            var CSVFile = File.ReadLines(path);
+
+            foreach (var line in CSVFile)
+            {
+                DzienPracy DzienPracyRCP = new DzienPracy();
+                string[] words = line.Split(';');
+                DzienPracyRCP.DodajDanePracownika(words);
+                DzienPracownikaFirmy.Add(DzienPracyRCP);
+            }
+        }
+
+    public static void WczytywanieZPlikuCSV2( string path, List<DzienPracy> DzienPracownikaFirmy)
+
+    {          
+            var CSVFile = File.ReadLines(path);
+            var SplitedArray = CSVFile.Select(a => a.Split(';'));
+            var result = SplitedArray.GroupBy(c => new { kodPracownika = c[0], Data = c[1] }).ToList();
+            
+            foreach (var line in result)
+            {                
+                DzienPracy DzienPracyRCP = new DzienPracy();
+                DzienPracyRCP.KodPracownika = line.Key.kodPracownika;
+                DateTime.TryParse(line.Key.Data, out DzienPracyRCP.Data);
+               
+                var we = line.FirstOrDefault(g => g[3] == "WE");
+                var wy = line.FirstOrDefault(g => g[3] == "WY");
+
+                if (we != null && wy != null)
                 {
-
-                    List<DzienPracy> DzienPracownikaFirmyA = new List<DzienPracy>();
-
-                    foreach (var line in CSVFile)
-                    {
-                        DzienPracy DzienPracyRCP = new DzienPracy();
-                        string[] words = line.Split(';');
-
-                        DzienPracyRCP.DodajDanePracownika(words);
-                        TimeSpan.TryParse(words[3], out DzienPracyRCP.GodzinaWyjscia);
-
-                        DzienPracownikaFirmyA.Add(DzienPracyRCP);
-                    }
-
-                    ListaObiektówDzienPracy.WypiszObiektyListy(DzienPracownikaFirmyA);
-
+                        TimeSpan.TryParse(we[2].ToString(), out DzienPracyRCP.GodzinaWejscia);
+                        TimeSpan.TryParse(wy[2].ToString(), out DzienPracyRCP.GodzinaWyjscia);
+                        DzienPracownikaFirmy.Add(DzienPracyRCP);
                 }
 
-                else if (kodFirmy == 'B')
-                {
-                    List<DzienPracy> DzienPracownikaFirmyB = new List<DzienPracy>();
-
-                    foreach (var line in CSVFile)
-                    {
-
-                        string[] words = line.Split(';');
-                        if (words[3] == "WE" && !String.IsNullOrEmpty(words[2].ToString()))
-                        {
-                            DzienPracy DzienPracyRCP = new DzienPracy();
-
-                            DzienPracyRCP.DodajDanePracownika(words);
-                            DzienPracownikaFirmyB.Add(DzienPracyRCP);
-
-                        }
-                        else if (words[3] == "WY")
-                        {
-                            if (!String.IsNullOrEmpty(words[2].ToString()))
-                            {
-                                    DateTime.TryParse(words[1], out DateTime Data);
-                                    var Pracownik = DzienPracownikaFirmyB.FirstOrDefault(s => s.KodPracownika == words[0] && s.Data == Data);
-                                    if (Pracownik != null)
-                                    {
-                                        TimeSpan.TryParse(words[2], out Pracownik.GodzinaWyjscia) ;
-
-                                    }
-                            }
-                        }
-                    }
-                    ListaObiektówDzienPracy.WypiszObiektyListy(DzienPracownikaFirmyB);
-                    
-                }
+            }
+            ListaObiektówDzienPracy.WypiszObiektyListy(DzienPracownikaFirmy);
 
         }
-    }
+
 }
+}
+
+   
